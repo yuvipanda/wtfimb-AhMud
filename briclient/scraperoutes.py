@@ -1,0 +1,48 @@
+from lxml import etree
+from urllib2 import urlopen
+
+from pylinq import PyLINQ
+
+SWIVT_NAMESPACE = "http://semantic-mediawiki.org/swivt/1.0#"
+RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+RDFS_NAMESPACE = "http://www.w3.org/2000/01/rdf-schema#"
+PROPERTY_NAMESPACE = "http://wiki.busroutes.in/wiki/Special:URIResolver/Property-3A"
+NAMESPACES = {
+        'swivt': SWIVT_NAMESPACE, 
+        'rdf': RDF_NAMESPACE, 
+        'rdfs': RDFS_NAMESPACE,
+        'property': PROPERTY_NAMESPACE}
+
+TRAIN_CAT_URL = "http://wiki.busroutes.in/wiki/Special:ExportRDF/Category:Train_route"
+
+def get_doc(url):
+    return etree.parse(urlopen(url))
+
+def get_route_data(route_url):
+    route_doc = get_doc(route_url)
+    subject_node = route_doc.xpath('//swivt:Subject[rdfs:isDefinedBy[@rdf:resource="'+route_url+'"]]', namespaces=NAMESPACES)[0]
+    label = subject_node.xpath('rdfs:label', namespaces=NAMESPACES)[0]
+    print label.text
+
+    stops = subject_node.xpath('property:Stops_at/@rdf:resource', namespaces=NAMESPACES)
+    stop_urls = [route_doc.xpath('//swivt:Subject[@rdf:about="' + stop + '"]/rdfs:isDefinedBy/@rdf:resource', namespaces=NAMESPACES)[0] for stop in stops]
+    for surl in stop_urls:
+        get_stop_data(surl)
+
+def get_stop_data(stop_url):
+    stop_doc = get_doc(stop_url)
+    subject_node = stop_doc.xpath('//swivt:Subject[rdfs:isDefinedBy[@rdf:resource="'+stop_url+'"]]', namespaces=NAMESPACES)[0]
+    display_name = subject_node.xpath('property:Display_name', namespaces=NAMESPACES)[0].text
+    located_at = subject_node.xpath('property:Located_at', namespaces=NAMESPACES)
+    if located_at:
+        located_at = located_at[0].text
+    else:
+        located_at = "No Location Data"
+    print display_name, located_at.encode('ascii', 'ignore')
+
+trains_doc = get_doc(TRAIN_CAT_URL)
+trains = PyLINQ(trains_doc.xpath('//swivt:Subject[rdf:type[@rdf:resource="http://wiki.busroutes.in/wiki/Special:URIResolver/Category-3ATrain_route"]]/rdfs:isDefinedBy/@rdf:resource', namespaces=NAMESPACES)).distinct(lambda x: x).items()
+
+for train in trains:
+    get_route_data(train)
+    print '-' * 32
