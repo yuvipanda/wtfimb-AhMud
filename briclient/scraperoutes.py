@@ -21,13 +21,12 @@ def get_doc(url):
 def get_route_data(route_url):
     route_doc = get_doc(route_url)
     subject_node = route_doc.xpath('//swivt:Subject[rdfs:isDefinedBy[@rdf:resource="'+route_url+'"]]', namespaces=NAMESPACES)[0]
-    label = subject_node.xpath('rdfs:label', namespaces=NAMESPACES)[0]
-    print label.text
+    label = subject_node.xpath('rdfs:label', namespaces=NAMESPACES)[0].text
 
     stops = subject_node.xpath('property:Stops_at/@rdf:resource', namespaces=NAMESPACES)
     stop_urls = [route_doc.xpath('//swivt:Subject[@rdf:about="' + stop + '"]/rdfs:isDefinedBy/@rdf:resource', namespaces=NAMESPACES)[0] for stop in stops]
-    for surl in stop_urls:
-        get_stop_data(surl)
+    stop_tuples = [get_stop_data(stop_url) for stop_url in stop_urls]
+    return (label, stop_tuples)
 
 def get_stop_data(stop_url):
     stop_doc = get_doc(stop_url)
@@ -38,11 +37,11 @@ def get_stop_data(stop_url):
         located_at = located_at[0].text
     else:
         located_at = "No Location Data"
-    print display_name, located_at.encode('ascii', 'ignore')
+    return (display_name, located_at)
 
 trains_doc = get_doc(TRAIN_CAT_URL)
 trains = PyLINQ(trains_doc.xpath('//swivt:Subject[rdf:type[@rdf:resource="http://wiki.busroutes.in/wiki/Special:URIResolver/Category-3ATrain_route"]]/rdfs:isDefinedBy/@rdf:resource', namespaces=NAMESPACES)).distinct(lambda x: x).items()
 
 for train in trains:
-    get_route_data(train)
+    print get_route_data(train)
     print '-' * 32
