@@ -1,0 +1,3 @@
+{% for s in route.stops %}
+\{\{Stops at\|{{s}}\}\}
+{% endfor %}
