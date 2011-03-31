@@ -1,3 +1,5 @@
-{{ stop.name }}
-{{ stop.latitude }}
-{{ stop.longitude }}
+{{ '{{' }}Stop 
+|display_name={{ stop.name }}
+|type=Bus
+|location={{ stop.latitude }} {{ stop.longitude }}
+{{ '}}' }}
