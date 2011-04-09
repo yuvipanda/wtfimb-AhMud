@@ -47,5 +47,6 @@ for s in stops:
     text = page.edit()
     if text == "":
         page.save(stop, summary="Import from old bri data")
+        print "Imported %s" % stops[s]["name"]
     else:
         print "stop '%s' exists already. Not overwriting" % stops[s]["name"]
