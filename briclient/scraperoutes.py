@@ -1,17 +1,19 @@
 from lxml import etree
 from urllib2 import urlopen
-
 from pylinq import PyLINQ
+import simplejson as json
+import sys
 
 SWIVT_NAMESPACE = "http://semantic-mediawiki.org/swivt/1.0#"
 RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 RDFS_NAMESPACE = "http://www.w3.org/2000/01/rdf-schema#"
 PROPERTY_NAMESPACE = "http://wiki.busroutes.in/wiki/Special:URIResolver/Property-3A"
 NAMESPACES = {
-        'swivt': SWIVT_NAMESPACE, 
-        'rdf': RDF_NAMESPACE, 
-        'rdfs': RDFS_NAMESPACE,
-        'property': PROPERTY_NAMESPACE}
+    'swivt': SWIVT_NAMESPACE, 
+    'rdf': RDF_NAMESPACE, 
+    'rdfs': RDFS_NAMESPACE,
+    'property': PROPERTY_NAMESPACE
+}
 
 TRAIN_CAT_URL = "http://wiki.busroutes.in/wiki/Special:ExportRDF/Category:Train_route"
 
@@ -42,6 +44,4 @@ def get_stop_data(stop_url):
 trains_doc = get_doc(TRAIN_CAT_URL)
 trains = PyLINQ(trains_doc.xpath('//swivt:Subject[rdf:type[@rdf:resource="http://wiki.busroutes.in/wiki/Special:URIResolver/Category-3ATrain_route"]]/rdfs:isDefinedBy/@rdf:resource', namespaces=NAMESPACES)).distinct(lambda x: x).items()
 
-for train in trains:
-    print get_route_data(train)
-    print '-' * 32
+json.dump([get_route_data(train) for train in trains], sys.stdout, indent=4, sort_keys=True)
